@@ -1,45 +1,7 @@
-# Multi-Tenant Architecture & JWT Authentication – Seminaarityö
-## Sisällysluettelo
-
-### Aihe
-
-### Tavoite
-
-### Tutkimuskysymykset
-
-### Johdanto ja tavoite
-
-### Teoreettinen tausta
-
-### Multi-tenancy-mallit
-
-### Päätökset ja hyväksymiskriteerit
-
-### Datan malli: käyttäjä useammassa tenantissa
-
-### Direct Tenant Ownership
-
-### User-Centric Membership-malli
-
-### Autentikaatiovirta ja tenantin valinta
-
-### JWT-autentikoinnin kriittiset huomioitavat asiat
-
-### Tenantin tunnistaminen
-
-### Datan eristäminen kyselytasolla
-
-### Käyttäjä useassa tenantissa
-
-### LoginTicket–väliaikainen JWT
-
-### Access Token
-
-### Yhteenveto
-
+Seminaarityö: Multi-Tenant–arkkitehtuuri ja JWT-autentikaatio
 Aihe
 
-Multi-tenant-arkkitehtuurin tietokantarakenne ja sen vaikutus JWT-autentikaatioon.
+Multi-tenant-arkkitehtuurin tietokantarakenne ja sen vaikutus JWT-autentikaatioon
 
 Tavoite
 
@@ -58,220 +20,249 @@ Miten toteutetaan testaus, jossa käyttäjä kuuluu useampaan tenanttiin?
 
 Johdanto ja tavoite
 
-Tässä seminaarityössä tutkin, miten moniasiakasarkkitehtuuri (multi-tenancy) toteutetaan ja miten se vaikuttaa autentikaatioon. Käytän esimerkkinä omaa SaaS-sovellustani, jossa toteutan JWT-pohjaisen autentikoinnin ja tenant-kohtaisen tietokantaeristyksen.
+Tässä seminaarityössä tutkin, miten moniasiakasarkkitehtuuri (multi-tenancy) toteutetaan ja miten se vaikuttaa autentikaatioon.
+Käytän esimerkkinä omaa SaaS-sovellustani, jossa toteutan JWT-pohjaisen autentikoinnin ja tenant-kohtaisen tietokantaeristyksen.
 Lopuksi rakennan yksinkertaiset testit, jotka todentavat ratkaisun toimivuuden.
 Aihe on ollut minulle teknisesti haastava ja ajankohtainen SaaS-kehityksen näkökulmasta.
 
 Teoreettinen tausta
+
+Multi-tenancy tarkoittaa ohjelmistoarkkitehtuuria, jossa useampi asiakasorganisaatio käyttää samaa järjestelmää, mutta heidän datansa on eristetty. Tämä voidaan toteuttaa usealla eri tavalla.
+
 Multi-tenancy-mallit
-1. Shared DB, shared schema
+1. Shared Database, Shared Schema
 
-Kaikki tenantit jakavat samat taulut
+Kaikki tenantit käyttävät samoja tauluja.
 
-Eristys tehdään tenant_id-sarakkeen avulla
+Eristys tehdään tenant_id-sarakkeen avulla.
 
-Nopein rakentaa, mutta tietoturvariski on suurin, jos eristys pettää
+Nopein toteuttaa, mutta suurin tietoturvariski, jos eristys pettää.
 
-2. Shared DB, separate schemas
+2. Shared Database, Separate Schemas
 
-Yhteinen tietokanta, mutta jokaisella tenantilla oma schema
+Yhteinen tietokanta, mutta jokaisella tenantilla oma schema.
 
-Parempi eristys
+Parempi eristys kuin shared schema -mallissa.
 
-Hallinta vaikeampaa etenkin suurissa ympäristöissä
+Hallinnointi ja migraatiot monimutkaisempia.
 
-3. Separate DB per tenant
+3. Separate Database per Tenant
 
-Jokaisella tenantilla oma tietokanta
+Jokaisella tenantilla oma tietokanta.
 
-Kallein mutta turvallisin malli
+Paras mahdollinen eristys ja tietoturva.
 
-Soveltuu suurille asiakasorganisaatioille
+Kallein ja raskain ylläpitää.
 
-Tässä työssä käytän mallia shared schema, koska se on MVP-vaiheessa kustannustehokas ja selkeä tapa havainnollistaa JWT-autentikaation ja tenant-eristyksen välistä vuorovaikutusta.
+Tässä työssä toteutan mallin Shared Database & Shared Schema.
 
 Päätökset ja hyväksymiskriteerit
-Valinnat:
+Valitut teknologiat
 
-NestJS + Prisma + PostgreSQL + JWT (shared schema)
+NestJS
 
-Hyväksymiskriteerit:
+Prisma ORM
 
-JWT sisältää tenantId-arvon
+PostgreSQL
 
-Käyttäjä, jolla on useampi membership, valitsee aktiivisen tenantin kirjautumisen yhteydessä
+JWT-autentikaatio (shared schema)
 
-Kaikki endpointit palauttavat vain valitun tenantin dataa
+Hyväksymiskriteerit
 
-Testit todentavat tenant-eristyksen ja monitenanttijäsenyyden
+JWT sisältää aina tenantId:n.
+
+Käyttäjä, jolla on useampi jäsenyys, valitsee aktiivisen tenantin.
+
+Endpointit palauttavat vain sen tenantin dataa, johon käyttäjä on kirjautunut.
+
+Testit todentavat tenant-eristyksen ja monitenanttijäsenyyden.
 
 Datan malli: käyttäjä useammassa tenantissa
+
+Multi-tenant-järjestelmä vaatii kaksi erillistä datamallin näkökulmaa:
+
 1. Direct Tenant Ownership
 
-Suora viittaus tenantId → data “omistaa” yhden yrityksen
+Suora viittaus tenantId.
 
-Sopii entiteeteille kuten: Ride, Invoice, Report
+Käytetään entiteeteissä, jotka kuuluvat nimenomaisesti yhdelle yritykselle (esim. Ride, Report, Driver).
 
-onDelete: Cascade poistaa kaiken tenantin datan sen poistuessa
+onDelete: Cascade poistaa kaiken tenanttiin kuuluvan datan, jos tenant poistetaan.
 
 Kuva →
 
-2. User-Centric Membership-malli
+2. User-Centric Membership -malli
 
-Mahdollistaa tilanteet, joissa käyttäjä kuuluu useisiin yrityksiin.
+Mahdollistaa käyttäjän kuulumisen useampaan yritykseen.
 
-Keskeiset hyödyt:
+Keskeisiä ominaisuuksia:
 
-Many-to-Many User ↔ Tenant
+Many-to-Many-suhde: User ↔ Tenant
 
-Selkeä roolien hallinta per tenant
+Membership-taulu määrittää:
 
-Käyttäjän oikeudet riippuvat membershipistä, ei käyttäjästä itsestään
+mihin tenantteihin käyttäjä kuuluu
 
-Skaalautuu hyvin
+mikä hänen roolinsa on kussakin tenantissa
+
+Mahdollistaa roolipohjaisen ja tenant-pohjaisen oikeuksien hallinnan.
 
 Kuva →
 
 Autentikaatiovirta ja tenantin valinta
 Taustaa
 
-JWT oli minulle aluksi uusi ja haastava konsepti. Opin sen ensin Spring Bootilla ja jälkeenpäin NestJS:llä, mikä antoi minulle syvemmän ymmärryksen.
+JWT oli minulle aluksi uusi ja haastava konsepti. Opin sen ensin Spring Bootilla ja toteutin myöhemmin uuden version NestJS:llä.
+Multi-tenant-ympäristössä JWT ei voi olla pelkkä “kirjautumistunniste”, vaan sen on:
 
-Kun sovellus toteutetaan multi-tenant shared schema -mallilla, JWT ei ole enää pelkkä kirjautumistunniste.
-Sen tulee varmistaa:
+tunnistettava käyttäjän tenant
 
-käyttäjän oikeus dataan
+estettävä käyttöoikeudet muihin tenanteihin
 
-oikea tenant-konteksti
+estettävä datan vuotaminen väärälle organisaatiolle
 
-datan eristäminen
-
-manipulointiyritysten estäminen
+käsiteltävä tilanteet, joissa käyttäjä kuuluu useampaan tenanttiin
 
 JWT-autentikoinnin kriittiset huomioitavat asiat
 1. Tenantin tunnistaminen
 
-Multi-tenant sovelluksessa JWT:ssä täytyy olla tieto siitä, mihin tenanttiin käyttäjä on kirjautunut.
+Single-tenant-sovelluksessa JWT voi sisältää vain sub, email, role.
+Multi-tenant-mallissa tämä ei riitä.
 
-Tokeniin lisätään:
+JWT:n payloadiin täytyy lisätä:
 
 tenantId
 
-Payload-esimerkki:
+Esimerkki payloadista (demokäyttäjä):
 
 Kuva →
 
-Backend käsittelee jokaisen requestin tämän tiedon perusteella.
+TenantId:n avulla backend pystyy käsittelemään jokaisen pyynnön oikeassa kontekstissa.
 
 2. Datan eristäminen kyselytasolla
 
-Shared schema -mallissa eristys on toteutettava ohjelmallisesti:
+Shared schema -mallissa kaikki tenantit jakavat samat taulut, joten eristys on suoritettava ohjelmallisesti.
 
-SELECT * FROM rides WHERE tenantId = :tokenTenantId
+Käytäntö:
 
+Jokainen kysely kirjoitetaan muodossa:
 
-Keskeistä:
+WHERE tenantId = :tokenTenantId
 
-tenantId tulee aina tokenista, ei requestista
+Johtopäätös:
 
-Jos yksikin endpoint unohtaa suodattaa tenantId:n, seurauksena voi olla tietovuoto
+tenantId luetaan aina tokenista, ei request-bodysta.
+
+Tietoturvavuoto syntyy, jos yksikin endpoint unohtaa suodattaa datan tenantId:n perusteella.
+
+Esimerkki tenant-eristyksestä
 
 Kuva →
 
-3. Käyttäjä useassa tenantissa
+3. Käyttäjä useassa tenantissa – aktiivinen tenant JWT:ssä
 
-Monissa SaaS-sovelluksissa käyttäjä voi kuulua useampaan tenanttiin.
+Nykyisissä SaaS-järjestelmissä on tavallista, että käyttäjä on jäsenenä useammassa yrityksessä (tenantissa).
+Tämä aiheuttaa kaksi ongelmaa:
 
-Tämä aiheuttaa haasteen:
+Miten käyttäjä valitsee aktiivisen tenantin?
 
-Miten valitaan “aktiivinen tenant”?
+Milloin tämä valinta tehdään — ennen vai jälkeen kirjautumisen?
 
-Valitaanko se ennen kirjautumista vai kirjautumisen jälkeen?
+Virheellinen idea (hylätty):
 
-Huono ensimmäinen idea (hylätty):
+Lisätä tenant-suffix emailiin
 
-Lisätä emailiin tenant-suffix
-john@gmail.com → john@gmail.com#TenantABC
+john@gmail.com → john@gmail.com#TenantXYZ
 
-Ongelmia:
+Osoittautui erittäin huonoksi: altis virheille, ei skaalautuva, vaikea ylläpitää.
 
-Kirjautumislogiikka monimutkainen
+Lopullinen ja toimiva toteutus
+Vaihe 1 — Login
 
-Vaatii suuria migraatioita
+Käyttäjä tekee POST /auth/login
 
-Virheherkkä ja huonosti skaalautuva
+Backend tarkistaa käyttäjän
 
-Lopullinen toteutettu ratkaisu
+Jos käyttäjällä on useampi membership → ei luoda vielä AccessTokenia
 
-Käyttäjä lähettää POST /auth/login
+Vaihe 2 — LoginTicket
 
-Jos käyttäjällä on useampi membership:
+Backend luo väliaikaisen, hyvin lyhytkestoisen JWT-tokenin:
 
-Backend palauttaa tenant-listan
+sisältää listan käyttäjän tenant-jäsenyyksistä
 
-Samalla luodaan loginTicket, joka on lyhytkestoinen JWT
+ei sisällä arkaluontoista tietoa
 
-Frontend näyttää tenantit → käyttäjä valitsee
+ei voi käyttää API-kutsuihin
 
-POST /auth/tenant-selection → backend varmistaa valinnan
+exp: 5 minuuttia
 
-Luodaan lopullinen Access Token, jossa on:
+Kuva →
+
+Vaihe 3 — Tenant valitaan
+
+Frontend näyttää listan tenanteista
+
+Käyttäjä valitsee tenantin
+
+POST /auth/tenant-selection
+
+Vaihe 4 — Access Token
+
+Backend verifioi LoginTicketin
+
+Tarkistaa, että käyttäjällä on oikeus valittuun tenanttiin
+
+Luo lopullisen Access Tokenin, jossa:
 
 sub
-
 email
-
 tenantId
-
 role
+
 
 Kuva →
 
 4. LoginTicket – väliaikainen JWT
 
-Väliaikainen JWT, joka sisältää vain tenant-tiedot.
-Se on voimassa lyhyen aikaa (esim. 5 min).
-
 Hyödyt:
 
-Ei voi kutsua API-päätepisteitä
+Ei voi käyttää muihin API-päätepisteisiin
 
-Ei sisällä arkaluontoisia tietoja
+Ei sisällä henkilökohtaisia tietoja
 
-Tenantia ei voi vaihtaa kesken session
+Estää tenantin vaihtamisen ilman uutta autentikointia
 
-Turvallinen ja selkeä flow
+Tekee multi-tenant-login-flow’sta selkeän ja turvallisen
 
 Kuva →
 
 5. Access Token
 
-Kun tenantti on valittu, backend luo varsinaisen pääsynhallintatokenin.
+Kun tenant on valittu:
 
-Token sisältää:
+Luodaan varsinainen pääsytoken
 
-sub
-email
-tenantId
-role
+Kaikki API-kutsut tapahtuvat tässä tenant-kontekstissa
 
-
-Kaikki API-kutsut tapahtuvat tämän tenantin kontekstissa.
+Roolit (ADMIN/USER) määräytyvät membershipin mukaan
 
 Kuva →
 
 Yhteenveto
 
-Multi-tenant shared schema -arkkitehtuurissa:
+Multi-tenant shared schema -arkkitehtuuri yhdistettynä JWT-autentikaatioon vaatii tarkkaa ja harkittua toteutusta.
 
-TenantId täytyy sisällyttää JWT-tokeniin
+Keskeiset havainnot:
 
-Kaikki kyselyt suodatetaan tokenin tenantId:n perusteella
+TenantId tulee tallentaa JWT-tokeniin.
 
-Käyttäjä voi kuulua useaan tenanttiin → aktiivinen tenant on valittava kirjautumisen yhteydessä
+Kaikki tietokantakyselyt suodatetaan tokenin tenantId:n perusteella.
 
-LoginTicket tekee multi-tenant-login-flow’sta turvallisen
+Käyttäjä voi kuulua useaan tenanttiin → aktiivinen tenant täytyy valita kirjautumisen yhteydessä.
 
-Access Token varmistaa oikean tenant-kontekstin kaikissa pyynnöissä
+LoginTicket antaa turvallisen tavan toteuttaa monivaiheinen kirjautuminen.
 
-Tämä työ auttoi minua ymmärtämään syvällisesti JWT-autentikaation, tenant-eristyksen sekä niiden yhteentoimivuuden modernissa SaaS-ympäristössä.
+Access Token varmistaa oikean tenant-kontekstin kaikissa pyynnöissä.
+
+Tenant-eristys on ratkaisevan tärkeä osa SaaS-järjestelmän tietoturvaa.
