@@ -1,41 +1,41 @@
-Multi-Tenant Architecture & JWT Authentication – Seminaarityö
-Sisällysluettelo
+# Multi-Tenant Architecture & JWT Authentication – Seminaarityö
+## Sisällysluettelo
 
-Aihe
+### Aihe
 
-Tavoite
+### Tavoite
 
-Tutkimuskysymykset
+### Tutkimuskysymykset
 
-Johdanto ja tavoite
+### Johdanto ja tavoite
 
-Teoreettinen tausta
+### Teoreettinen tausta
 
-Multi-tenancy-mallit
+### Multi-tenancy-mallit
 
-Päätökset ja hyväksymiskriteerit
+### Päätökset ja hyväksymiskriteerit
 
-Datan malli: käyttäjä useammassa tenantissa
+### Datan malli: käyttäjä useammassa tenantissa
 
-Direct Tenant Ownership
+### Direct Tenant Ownership
 
-User-Centric Membership-malli
+### User-Centric Membership-malli
 
-Autentikaatiovirta ja tenantin valinta
+### Autentikaatiovirta ja tenantin valinta
 
-JWT-autentikoinnin kriittiset huomioitavat asiat
+### JWT-autentikoinnin kriittiset huomioitavat asiat
 
-Tenantin tunnistaminen
+### Tenantin tunnistaminen
 
-Datan eristäminen kyselytasolla
+### Datan eristäminen kyselytasolla
 
-Käyttäjä useassa tenantissa
+### Käyttäjä useassa tenantissa
 
-LoginTicket–väliaikainen JWT
+### LoginTicket–väliaikainen JWT
 
-Access Token
+### Access Token
 
-Yhteenveto
+### Yhteenveto
 
 Aihe
 
