@@ -32,23 +32,3 @@ Tavoitteena on selvittää ja demonstroida:
 | **TypeScript** | Tyypitetty kehitysympäristö |
 
 ---
-
-## 🧩 Toteutus
-
-### 1. Tietokantarakenne
-Käytössä on *shared-database, shared-schema* -malli, jossa tenantit erotellaan `tenantId`-sarakkeen avulla.
-
-```prisma
-model Tenant {
-  id     String  @id @default(uuid())
-  name   String
-  users  User[]
-}
-
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-}
