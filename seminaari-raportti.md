@@ -66,7 +66,8 @@ Multi-tenant-järjestelmä vaatii kaksi erillistä datamallin näkökulmaa:
 - Käytetään entiteeteissä, jotka kuuluvat nimenomaisesti yhdelle yritykselle (esim. Ride, Report, Driver).
 - onDelete: Cascade poistaa kaiken tenanttiin kuuluvan datan, jos tenant poistetaan.
 
-Kuva →
+<img width="569" height="393" alt="Näyttökuva 2025-11-17 162600" src="https://github.com/user-attachments/assets/b6cfae5a-f379-4911-ae09-4f70049b5fc5" />
+
 
  **2. User-Centric Membership -malli**
 
@@ -78,7 +79,8 @@ Keskeisiä ominaisuuksia:
   - mikä hänen roolinsa on kussakin tenantissa
   - Mahdollistaa roolipohjaisen ja tenant-pohjaisen oikeuksien hallinnan.
 
-Kuva →
+<img width="923" height="436" alt="Näyttökuva 2025-11-17 164107" src="https://github.com/user-attachments/assets/2877493d-bcd1-4b67-a79b-5f0dd8135d9c" />
+
 
 ## Autentikaatiovirta ja tenantin valinta
 **_Taustaa_**
@@ -98,7 +100,7 @@ Multi-tenant-mallissa tämä ei riitä. JWT:n payloadiin täytyy lisätä **tena
 TenantId:n avulla backend pystyy käsittelemään jokaisen pyynnön oikeassa kontekstissa.
 _Esimerkki payloadista (demokäyttäjä):_
 
-Kuva →
+<img width="757" height="429" alt="Näyttökuva 2025-11-19 134512" src="https://github.com/user-attachments/assets/449191ca-a3db-4623-8681-9a343446cb6b" />
 
 
 
@@ -114,7 +116,8 @@ jos yksikin endpoint unohtaa suodattaa datan tenantId:n perusteella.
 
 _Esimerkki tenant-eristyksestä_
 
-Kuva →
+<img width="844" height="36" alt="Näyttökuva 2025-11-19 142633" src="https://github.com/user-attachments/assets/42a4e60d-d5f2-4d86-bdbd-bcf8a899ec87" />
+
 
 **_3. Käyttäjä useassa tenantissa – aktiivinen tenant JWT:ssä_**
 
@@ -148,24 +151,29 @@ Ensimmäinen ideani (hylätty):
 -> 
 Käyttäjä tekee **POST /auth/login**, jonka jälkeen **Backend** tarkistaa _(validoi)_ käyttäjän
 _Tärkeää_ -> Jos käyttäjällä on useampi **membership** → ei luoda vielä **AccessTokenia**
+<img width="663" height="449" alt="Näyttökuva 2025-11-19 150843" src="https://github.com/user-attachments/assets/39acfc03-0046-4300-aacc-6615a12ecb52" />
+<img width="724" height="510" alt="Näyttökuva 2025-11-19 151251" src="https://github.com/user-attachments/assets/08d7f200-9352-4321-bb3e-162b0ebb40d7" />
 
 **Vaihe 2 — LoginTicket**
 -> 
 Backend luo väliaikaisen, hyvin lyhytkestoisen JWT-ticketin: sisältää listan käyttäjän tenant-jäsenyyksistä, sekä itse (exp: 5 minuuttia) **_loginTicket_**:in,
 ei sisällä arkaluontoista tietoa .Tätä tickettiä ei voi käyttää muihin API-kutsuihin _(audience: tenant-selection)_
 
-Kuva →
+Kuva →<img width="783" height="211" alt="Näyttökuva 2025-11-19 151516" src="https://github.com/user-attachments/assets/5181ec09-5e38-4c5c-a5ff-f164b8a19834" />
+
 
 **_Vaihe 3 — Tenant valitaan_**
 
-Frontend näyttää listan tenanteista, josta käyttäjä valitsee tenantin ---> **POST /auth/tenant-selection**
+Frontend näyttää listan tenanteista, josta käyttäjä valitsee tenantin ---> **POST /auth/select-tenant**
+<img width="425" height="134" alt="Näyttökuva 2025-11-19 151559" src="https://github.com/user-attachments/assets/b2614105-a216-44ae-ae75-2c34316c5456" />
 
 **_Vaihe 4 — Access Token_**
 
 Backend verifikoi LoginTicketin, tarkistaa, että käyttäjällä on oikeus valittuun tenanttiin, jonka jälkeen
 luo lopullisen **_Access Tokenin_**, jossa:
 
-Kuva →
+<img width="781" height="752" alt="Näyttökuva 2025-11-19 152011" src="https://github.com/user-attachments/assets/e63186d7-744b-4b04-85f4-9d9640b31b95" />
+
 
 **_4. LoginTicket – väliaikainen JWT-**
 
@@ -175,14 +183,16 @@ Hyödyt:
 - Estää tenantin vaihtamisen ilman uutta autentikointia
 - Tekee multi-tenant-login-flow’sta selkeän ja turvallisen
 
-Kuva →
+<img width="324" height="180" alt="Näyttökuva 2025-11-19 152508" src="https://github.com/user-attachments/assets/a9114ecd-a019-4b4d-9c18-20f04e3baf77" />
+
 
 **_5. Access Token:**
 Kun tenant on valittu luodaan varsinainen pääsytoken.
 Kaikki API-kutsut tapahtuvat tässä tenant-kontekstissa
 Roolit (ADMIN/DRIVER) määräytyvät membershipin mukaan
 
-Kuva →
+<img width="727" height="378" alt="Näyttökuva 2025-11-19 152540" src="https://github.com/user-attachments/assets/72e4143a-95fe-4e9f-8f27-a2f8d5fb7729" />
+
 
 Yhteenveto
 
